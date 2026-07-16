@@ -1,0 +1,48 @@
+flowchart TB
+    classDef gate fill:#fff3cd,stroke:#856404,color:#333
+    classDef pipeline fill:#d1ecf1,stroke:#0c5460,color:#333
+    classDef aws fill:#ff9900,stroke:#232f3e,color:#fff
+    classDef danger fill:#f8d7da,stroke:#721c24,color:#333
+
+    DEV["Developer"]
+    COMMIT["git commit<br/><b>branch: K_Test_1</b>"]
+
+    subgraph PRECOMMIT["Pre-commit Governance Hooks (local gate)"]
+        direction LR
+        FMT["terraform_fmt<br/>(style)"]
+        VAL["terraform_validate<br/>(correctness)"]
+        LINT["tflint<br/>(lint)"]
+        SEC["tfsec<br/>(security)"]
+        FMT --> VAL --> LINT --> SEC
+    end
+
+    PUSH["git push"]
+    GH["GitHub<br/><b>branch: K_Test_1</b>"]
+
+    subgraph PARALLEL["Parallel GitHub Actions Workflows"]
+        direction LR
+        TF_PIPE["Terraform Pipeline<br/>fmt → init → validate<br/>→ plan → apply<br/><i>per-env matrix</i>"]
+        TG_PIPE["Terragrunt Pipeline<br/>run-all plan<br/>→ run-all apply"]
+    end
+
+    subgraph BACKENDS["Remote State Backends"]
+        direction TB
+        TF_BE["Raw Terraform<br/>HARDCODED backend<br/>knight-tfstate-&lt;env&gt;-manual<br/>knight-tf-locks-&lt;env&gt;<br/><i>manual bootstrap</i>"]
+        TG_BE["Terragrunt DRY<br/>AUTO-BOOTSTRAP<br/>knight-tfstate-&lt;account-id&gt;<br/>knight-terragrunt-locks<br/>key = path_relative_to_include()"]
+    end
+
+    IAM["AWS IAM User<br/><b>KNIGHT_mark_1</b><br/>secrets: AWS_ACCESS_KEY_ID"]
+    RES["Resource Deployment<br/>knight-raw-&lt;env&gt;-storage (raw TF)<br/>knight-&lt;env&gt;-storage (Terragrunt)<br/>encrypted · versioned · private"]
+
+    DEV --> COMMIT --> PRECOMMIT
+    PRECOMMIT --> PUSH --> GH
+    GH --> PARALLEL
+    TF_PIPE --> TF_BE
+    TG_PIPE --> TG_BE
+    TF_BE --> IAM
+    TG_BE --> IAM
+    IAM --> RES
+
+    class FMT,VAL,LINT,SEC gate
+    class TF_PIPE,TG_PIPE pipeline
+    class IAM,RES aws

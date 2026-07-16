@@ -23,6 +23,21 @@ Both approaches are wired into their own GitHub Actions pipeline (see the badges
 two can be applied to the same account without clashing, they use **distinct** bucket names:
 raw Terraform creates `knight-raw-<env>-storage`, Terragrunt creates `knight-<env>-storage`.
 
+## Architecture & CI/CD flow
+
+The end-to-end flow of Project KNIGHT — from a local commit through the governance
+gates, into GitHub, and out to AWS via the `KNIGHT_mark_1` IAM user:
+
+![KNIGHT Workflow Architecture — Commit → Pre-commit → GitHub → Terragrunt/Terraform → AWS](workflow_architecture.png)
+
+## Live demo runbook
+
+Six-scene presenter script for the KNIGHT walkthrough (~50 minutes total):
+
+![KNIGHT Live Demo Runbook — 6-scene presenter script](live_demo_runbook.png)
+
+> Regenerate these diagrams locally: `python scripts/render-mermaid-diagrams.py`
+
 ## Repository layout
 
 ```
@@ -47,9 +62,13 @@ raw Terraform creates `knight-raw-<env>-storage`, Terragrunt creates `knight-<en
 │
 ├── .github/workflows/
 │   ├── terraform-pipeline.yml     #   plan + apply per environment (K_Test_1 only)
-│   └── terragrunt-pipeline.yml    #   run-all plan + run-all apply (K_Test_1 only)
+│   ├── terragrunt-pipeline.yml    #   run-all plan + run-all apply (K_Test_1 only)
+│   └── knight-destroy-pipeline.yml #  parallel destroy (AWS_Destroy_KNIGHT_mark_1 only)
 │
 ├── .pre-commit-config.yaml        # terraform_fmt, terraform_validate, tflint, tfsec
+├── scripts/                       #   local PNG diagram renderer
+├── workflow_architecture.png      #   CI/CD flow diagram
+├── live_demo_runbook.png          #   6-scene presenter runbook
 └── README.md
 ```
 

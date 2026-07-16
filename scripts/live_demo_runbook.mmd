@@ -1,0 +1,54 @@
+flowchart TB
+    classDef scene fill:#e8f4fd,stroke:#1565c0,color:#111,stroke-width:2px
+    classDef action fill:#f1f8e9,stroke:#33691e,color:#111
+    classDef highlight fill:#fff3e0,stroke:#e65100,color:#111,stroke-width:2px
+
+    TITLE["KNIGHT Live Demo Runbook<br/>6-Scene Presenter Script · ~50 min total"]
+
+    subgraph S1["Scene 1 · Repository Overview · 5 min"]
+        S1A["Branch strategy<br/>K_Test_1 · AWS_Destroy_KNIGHT_mark_1"]
+        S1B["Layout walkthrough<br/>terraform/ vs terragrunt/"]
+        S1C["CI badges &amp; .pre-commit-config.yaml"]
+    end
+
+    subgraph S2["Scene 2 · Raw Terraform Anti-Pattern · 10 min"]
+        S2A["cat terraform/stage/backend.tf<br/><i>hardcoded bucket + lock table</i>"]
+        S2B["Manual S3 + DynamoDB bootstrap<br/><i>pain point: copy-paste per env</i>"]
+        S2C["terraform init → plan → apply"]
+    end
+
+    subgraph S3["Scene 3 · Terragrunt DRY Pattern · 10 min"]
+        S3A["cat terragrunt/terragrunt.hcl<br/><i>single remote_state block</i>"]
+        S3B["terragrunt run-all plan<br/><b>magic: auto-bootstrap backend</b>"]
+        S3C["terragrunt run-all apply<br/>module reuse · isolated state keys"]
+    end
+
+    subgraph S4["Scene 4 · Governance &amp; CI/CD · 10 min"]
+        S4A["pre-commit run --all-files<br/>fmt · validate · tflint · tfsec"]
+        S4B["Push to K_Test_1"]
+        S4C["Parallel pipelines in Actions tab<br/>Terraform matrix + Terragrunt run-all"]
+    end
+
+    subgraph S5["Scene 5 · Cost Control &amp; Destroy · 5 min"]
+        S5A["git checkout AWS_Destroy_KNIGHT_mark_1"]
+        S5B["Review knight-destroy-pipeline.yml<br/><i>KNIGHT_mark_1 IAM context</i>"]
+        S5C["Parallel destroy:<br/>terraform destroy matrix<br/>+ terragrunt run-all destroy"]
+    end
+
+    subgraph S6["Scene 6 · Q&amp;A &amp; Discussion · 10 min"]
+        S6A["Scalability · team workflows"]
+        S6B["State isolation · migration path"]
+        S6C["Emergency teardown &amp; cost savings"]
+    end
+
+    TITLE --> S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    S1A --> S1B --> S1C
+    S2A --> S2B --> S2C
+    S3A --> S3B --> S3C
+    S4A --> S4B --> S4C
+    S5A --> S5B --> S5C
+    S6A --> S6B --> S6C
+
+    class S1,S2,S3,S4,S5,S6 scene
+    class S1A,S1B,S1C,S2A,S2B,S2C,S3A,S3C,S4A,S4B,S4C,S5A,S5B,S6A,S6B,S6C action
+    class S3B,S5C highlight
