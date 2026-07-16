@@ -15,7 +15,8 @@ provider "aws" {
 
 # tfsec:ignore:aws-s3-enable-bucket-logging Access logging omitted: demo bucket, no log target provisioned.
 resource "aws_s3_bucket" "app_storage" {
-  bucket = "${var.project}-${var.environment}-storage"
+  # Named distinctly from the Terragrunt demo bucket so both can coexist.
+  bucket = "${var.project}-raw-${var.environment}-storage"
 
   tags = {
     Project     = var.project

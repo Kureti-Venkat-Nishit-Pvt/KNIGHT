@@ -19,7 +19,9 @@ can compare them side by side:
 | **Raw Terraform** | [`terraform/`](terraform/) | Each environment is its own directory with a **hardcoded, copy-pasted** `backend.tf`. Simple, but repetitive and error-prone. This is the "anti-pattern". |
 | **Terragrunt (DRY)** | [`terragrunt/`](terragrunt/) | A **single root** `terragrunt.hcl` defines the backend once. Every environment inherits it with an `include` block, and the state backend is **auto-provisioned** on first run. |
 
-Both approaches are wired into their own GitHub Actions pipeline (see the badges above).
+Both approaches are wired into their own GitHub Actions pipeline (see the badges above). So the
+two can be applied to the same account without clashing, they use **distinct** bucket names:
+raw Terraform creates `knight-raw-<env>-storage`, Terragrunt creates `knight-<env>-storage`.
 
 ## Repository layout
 
