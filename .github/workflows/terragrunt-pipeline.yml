@@ -1,0 +1,55 @@
+name: Terragrunt Pipeline
+
+# Environment-aware CI/CD using the official Gruntwork Terragrunt action.
+# A single `run-all` command handles every environment at once and
+# auto-provisions the remote state backend. Triggers ONLY on K_Test_1.
+on:
+  push:
+    branches: [K_Test_1]
+  pull_request:
+    branches: [K_Test_1]
+
+permissions:
+  contents: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-1
+  tf_version: 1.9.8
+  tg_version: 0.67.16
+  working_dir: terragrunt
+
+jobs:
+  plan:
+    name: Terragrunt run-all plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Terragrunt run-all plan
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: "run-all plan"
+
+  apply:
+    name: Terragrunt run-all apply
+    needs: plan
+    # Apply only on direct pushes to K_Test_1, never on pull requests.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Terragrunt run-all apply
+        uses: gruntwork-io/terragrunt-action@v2
+        with:
+          tf_version: ${{ env.tf_version }}
+          tg_version: ${{ env.tg_version }}
+          tg_dir: ${{ env.working_dir }}
+          tg_command: "run-all apply"

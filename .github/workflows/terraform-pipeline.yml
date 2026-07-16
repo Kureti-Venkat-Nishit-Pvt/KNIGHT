@@ -1,0 +1,55 @@
+name: Terraform Pipeline
+
+# Traditional, "raw Terraform" CI/CD. Each environment is handled explicitly
+# because the backend is hardcoded per-directory (the anti-pattern this repo
+# demonstrates). Triggers ONLY on the K_Test_1 branch.
+on:
+  push:
+    branches: [K_Test_1]
+  pull_request:
+    branches: [K_Test_1]
+
+permissions:
+  contents: read
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-1
+
+jobs:
+  terraform:
+    name: Terraform (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [stage, prod]
+    defaults:
+      run:
+        working-directory: terraform/${{ matrix.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      # Apply only on direct pushes to K_Test_1, never on pull requests.
+      - name: Terraform Apply
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false

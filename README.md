@@ -2,159 +2,153 @@
 
 > **K**olappan · **N**ishit · **I**nfrastructure · **G**itHub · **H**ybrid · **T**erraform
 
+[![Terraform Pipeline](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terraform-pipeline.yml/badge.svg?branch=K_Test_1)](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terraform-pipeline.yml?query=branch%3AK_Test_1)
+[![Terragrunt Pipeline](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terragrunt-pipeline.yml/badge.svg?branch=K_Test_1)](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terragrunt-pipeline.yml?query=branch%3AK_Test_1)
+
 ---
 
-## Checkov Security Demo
+## What is KNIGHT?
 
-This repository demonstrates the difference between a standard Terraform CI pipeline and a security-focused pipeline that uses [Checkov](https://www.checkov.io/) to scan infrastructure-as-code for misconfigurations.
+KNIGHT is a small, hands-on demonstration of **why teams adopt Terragrunt on top of
+plain Terraform**. It ships the *same* piece of infrastructure — an AWS S3 storage
+bucket, deployed to a `stage` and a `prod` environment — in two different ways so you
+can compare them side by side:
 
-> **No AWS account required.** Checkov analyzes code statically inside the GitHub runner — nothing is deployed to the cloud.
+| Approach | Folder | The idea |
+|----------|--------|----------|
+| **Raw Terraform** | [`terraform/`](terraform/) | Each environment is its own directory with a **hardcoded, copy-pasted** `backend.tf`. Simple, but repetitive and error-prone. This is the "anti-pattern". |
+| **Terragrunt (DRY)** | [`terragrunt/`](terragrunt/) | A **single root** `terragrunt.hcl` defines the backend once. Every environment inherits it with an `include` block, and the state backend is **auto-provisioned** on first run. |
 
-## Repository Structure
+Both approaches are wired into their own GitHub Actions pipeline (see the badges above).
+
+## Repository layout
 
 ```
 .
-├── .github/
-│   └── workflows/
-│       ├── checkov-scan.yml      # Security pipeline with Checkov scanning
-│       └── standard-deploy.yml   # Standard pipeline (fmt + validate only)
-├── main.tf                       # Intentionally insecure Terraform resources
-├── providers.tf                  # AWS provider and Terraform version constraints
-├── README.md                     # Project overview and secured code reference
-└── STEPS.md                      # Step-by-step demo guide (presenter's cheat sheet)
+├── terraform/                     # Zone A — raw Terraform (the anti-pattern)
+│   ├── stage/                     #   backend.tf is hardcoded here...
+│   │   ├── main.tf                #   S3 bucket (encrypted, versioned, private)
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── backend.tf             #   ...and copy-pasted into prod/ below
+│   └── prod/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── backend.tf             #   same block, duplicated (the smell)
+│
+├── terragrunt/                    # Zone A — Terragrunt (DRY)
+│   ├── terragrunt.hcl             #   root: remote_state + provider, defined ONCE
+│   ├── stage/terragrunt.hcl       #   include "root" → inherits everything
+│   ├── prod/terragrunt.hcl        #   include "root" → inherits everything
+│   └── modules/s3-bucket/         #   one reusable module for every environment
+│
+├── .github/workflows/
+│   ├── terraform-pipeline.yml     #   plan + apply per environment (K_Test_1 only)
+│   └── terragrunt-pipeline.yml    #   run-all plan + run-all apply (K_Test_1 only)
+│
+├── .pre-commit-config.yaml        # terraform_fmt, terraform_validate, tflint, tfsec
+└── README.md
 ```
 
-| File | Purpose |
-|------|---------|
-| `providers.tf` | Configures the AWS provider (`us-east-1`) and pins Terraform/AWS provider versions |
-| `main.tf` | Defines EC2, Security Group, and S3 resources with deliberate security flaws |
-| `.github/workflows/standard-deploy.yml` | Runs `terraform fmt`, `init`, and `validate` — no security scanning |
-| `.github/workflows/checkov-scan.yml` | Runs the same Terraform init, then scans all `.tf` files with Checkov |
+## The core idea: DRY backends
 
-## Why the Standard Workflow Passes but Checkov Fails
-
-Both workflows start from the same Terraform code, but they validate different things:
-
-| Workflow | What it checks | Result |
-|----------|----------------|--------|
-| **Standard Pipeline** | Syntax (`fmt`), provider init, and schema validation (`validate`) | **Passes** — the Terraform is syntactically correct and valid |
-| **Security Pipeline (Checkov)** | Security and compliance policies against AWS best practices | **Fails** — Checkov detects intentional misconfigurations |
-
-`terraform validate` only confirms that your configuration is well-formed and internally consistent. It does **not** evaluate whether your resources follow security best practices. Checkov fills that gap by applying hundreds of policy checks (CIS benchmarks, SOC2, etc.) to your IaC.
-
-## Three Security Vulnerabilities in `main.tf`
-
-### 1. Unencrypted EC2 Root Volume
+**Raw Terraform** forces you to hardcode the backend in every directory:
 
 ```hcl
-root_block_device {
-  encrypted = false   # CKV_AWS_79
+# terraform/stage/backend.tf   AND   terraform/prod/backend.tf (duplicated!)
+terraform {
+  backend "s3" {
+    bucket         = "knight-tfstate-stage-manual"
+    key            = "stage/s3-bucket/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "knight-tf-locks-stage"
+  }
 }
 ```
 
-The root EBS volume is not encrypted at rest. Any data stored on the instance disk is readable if the volume is detached or compromised.
+You must also **manually** create that bucket and lock table before `terraform init` works.
 
-### 2. SSH Open to the Internet (0.0.0.0/0)
+**Terragrunt** defines it once and derives each environment's state path dynamically:
 
 ```hcl
-ingress {
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]   # CKV_AWS_24
+# terragrunt/terragrunt.hcl  (the ONLY place the backend is declared)
+remote_state {
+  backend = "s3"
+  config = {
+    bucket = "knight-tfstate-${get_aws_account_id()}"
+    key    = "${path_relative_to_include()}/terraform.tfstate"   # → stage/... or prod/...
+    region = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "knight-terragrunt-locks"
+  }
 }
 ```
 
-Port 22 is exposed to the entire internet, making the instance a target for brute-force SSH attacks.
+`path_relative_to_include()` expands to the child directory name, so `stage` and `prod`
+get isolated state keys automatically — and Terragrunt **creates the S3 bucket and lock
+table for you** on the first run.
 
-### 3. S3 Bucket Without Server-Side Encryption
+## Prerequisites
 
-```hcl
-resource "aws_s3_bucket" "insecure_bucket" {
-  bucket        = "insecure-bucket-demo"
-  force_destroy = true
-  # No encryption configured — CKV_AWS_19
-}
-```
+**AWS**
+- An AWS account and an IAM user (this project uses **`KNIGHT_mark_1`**) with permissions
+  for S3 and DynamoDB (to create/manage state) and to create the demo S3 buckets.
+- Credentials exported locally, or stored as the GitHub Actions secrets
+  `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`:
 
-Objects stored in the bucket are not encrypted at rest, violating data protection requirements.
+  ```bash
+  export AWS_ACCESS_KEY_ID="..."
+  export AWS_SECRET_ACCESS_KEY="..."
+  export AWS_DEFAULT_REGION="us-east-1"
+  ```
 
-## Getting Started — Push to GitHub
+**Local CLI tools**
 
-Follow these steps to initialize the repo and trigger the GitHub Actions workflows:
+| Tool | Version | Install |
+|------|---------|---------|
+| Terraform | ≥ 1.5.0 | https://developer.hashicorp.com/terraform/install |
+| Terragrunt | ≥ 0.50.0 | https://terragrunt.gruntwork.io/docs/getting-started/install/ |
+| pre-commit | latest | `pip install pre-commit` |
+| tflint | latest | https://github.com/terraform-linters/tflint |
+| tfsec | latest | https://github.com/aquasecurity/tfsec |
+
+Then enable the git hooks:
 
 ```bash
-# 1. Initialize a local git repository
-git init
-
-# 2. Stage all files
-git add .
-
-# 3. Create the initial commit
-git commit -m "Add Checkov security demo with intentionally insecure Terraform"
-
-# 4. Create a new repository on GitHub (via the web UI or gh CLI), then link it:
-git remote add origin https://github.com/<YOUR_USERNAME>/<YOUR_REPO>.git
-
-# 5. Rename the default branch to main and push
-git branch -M main
-git push -u origin main
+pre-commit install
 ```
 
-After pushing, open the **Actions** tab on GitHub. You will see:
+## Branching layout
 
-- **Standard Pipeline (No Security Scan)** — green checkmark
-- **Security Pipeline (With Checkov)** — red X with detailed findings
+All work for this demo lives on the **`K_Test_1`** branch. Both CI pipelines are
+configured to trigger **only** on pushes and pull requests targeting `K_Test_1`, so the
+status badges above always reflect that branch.
 
-## Secured `main.tf`
+## Workflow triggers (step by step)
 
-Replace the contents of `main.tf` with the following to remediate all three vulnerabilities:
+### Local
 
-```hcl
-resource "aws_instance" "demo_web_server" {
-  ami                         = "ami-0c7217cdde317cfec"
-  instance_type               = "t3.micro"
-  associate_public_ip_address = true
+```bash
+# Format & validate the raw Terraform
+terraform fmt -recursive
+cd terraform/stage && terraform init -backend=false && terraform validate && cd -
+cd terraform/prod  && terraform init -backend=false && terraform validate && cd -
 
-  root_block_device {
-    encrypted = true
-  }
-}
+# Dry-run every environment through Terragrunt (auto-bootstraps the backend)
+cd terragrunt && terragrunt run-all plan && cd -
 
-resource "aws_security_group" "allow_ssh" {
-  name        = "allow_ssh"
-  description = "Allow SSH inbound traffic"
-
-  ingress {
-    description = "SSH from private network only"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/8"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_s3_bucket" "insecure_bucket" {
-  bucket        = "insecure-bucket-demo"
-  force_destroy = true
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "insecure_bucket" {
-  bucket = aws_s3_bucket.insecure_bucket.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
+# Run every linter / security scan
+pre-commit run --all-files
 ```
 
-After applying these fixes, re-push to `main`. The Checkov workflow should pass.
+### CI/CD (GitHub Actions)
+
+1. Push commits to `K_Test_1` (or open a PR into it).
+2. **Terraform Pipeline** — runs `fmt` → `init` → `validate` → `plan` for `stage` and
+   `prod`. On direct pushes it also runs `apply`.
+3. **Terragrunt Pipeline** — runs `terragrunt run-all plan` across all environments. On
+   direct pushes it runs `terragrunt run-all apply`.
+4. Watch progress in the **Actions** tab, or via the badges at the top of this README.
+
+> Pull requests run **plan only** — `apply` is gated behind `push` events for safety.
