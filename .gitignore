@@ -2,9 +2,6 @@
 # KNIGHT — .gitignore
 # =============================================================================
 
-# Internal presenter guide — FOR MY EYES ONLY. Never commit.
-.internal_guide/
-
 # Terraform / Terragrunt
 **/.terraform/*
 .terraform.lock.hcl
