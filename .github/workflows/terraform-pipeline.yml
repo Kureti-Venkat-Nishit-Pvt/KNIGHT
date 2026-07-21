@@ -60,7 +60,13 @@ jobs:
         run: terraform fmt -check -recursive
 
       - name: Terraform Init
+        id: init
         run: terraform init -input=false
+        continue-on-error: true
+
+      - name: Terraform Init with Reconfigure (Fallback)
+        if: failure() && steps.init.outcome == 'failure'
+        run: terraform init -reconfigure -input=false
 
       - name: Terraform Validate
         run: terraform validate
