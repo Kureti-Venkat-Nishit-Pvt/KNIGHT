@@ -90,8 +90,8 @@ Both pipelines require the following GitHub repository secrets:
 
 | Secret Name | Description | Example |
 |-------------|-------------|---------|
-| `AWS_ACCESS_KEY_ID` | AWS access key for IAM user KNIGHT_mark_1 | `AKIAIOSFODNN7EXAMPLE` |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key for IAM user KNIGHT_mark_1 | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
+| `AWS_ACCESS_KEY_ID` | AWS access key for IAM user KNIGHT_mark_1 | `XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key for IAM user KNIGHT_mark_1 | `XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX` |
 
 ### How to Configure Secrets
 
