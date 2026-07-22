@@ -162,6 +162,42 @@ cd terragrunt && terragrunt run-all plan && cd -
 # Run every linter / security scan
 pre-commit run --all-files
 ```
+---
+## Terraform Workflow
+```mermaid
+flowchart TD
+    A["Developer writes Terraform code"] --> B["Run terraform fmt"]
+    B --> C["Run terraform validate"]
+    C --> D["Run TFLint"]
+    D --> E["Run tfsec"]
+    E --> F{"Issues found?"}
+    F -->|"Yes"| G["Fix Terraform code"]
+    G --> B
+    F -->|"No"| H["Run terraform plan"]
+    H --> I["Review planned changes"]
+    I --> J["Run terraform apply"]
+  ```
+
+---
+
+# What Is TFLint?
+
+> TFlint is a linter for Terraform.
+
+> A linter checks your code for:
+
+1. Possible errors
+2. Bad practices
+3. Deprecated syntax
+4. Provider-specific mistakes
+5. Invalid or unsupported configuration values
+6. Custom team rules
+
+> It does not usually check deep security risks. That is where tools like tfsec are useful.
+
+---
+
+---
 
 ### CI/CD (GitHub Actions)
 
