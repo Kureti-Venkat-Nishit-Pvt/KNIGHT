@@ -165,6 +165,7 @@ pre-commit run --all-files
 ---
 ## Terraform Workflow
 ```mermaid
+
 flowchart TD
     A["Developer writes Terraform code"] --> B["Run terraform fmt"]
     B --> C["Run terraform validate"]
@@ -176,6 +177,7 @@ flowchart TD
     F -->|"No"| H["Run terraform plan"]
     H --> I["Review planned changes"]
     I --> J["Run terraform apply"]
+
   ```
 
 ---
