@@ -5,9 +5,9 @@ name: Terragrunt Pipeline
 # auto-provisions the remote state backend. Triggers ONLY on K_Test_1.
 on:
   push:
-    branches: [K_Test_1]
+    branches: [K_Test_2]
   pull_request:
-    branches: [K_Test_1]
+    branches: [K_Test_2]
 
 permissions:
   contents: read
