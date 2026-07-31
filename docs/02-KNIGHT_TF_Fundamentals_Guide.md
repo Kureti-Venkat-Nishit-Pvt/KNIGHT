@@ -1119,45 +1119,120 @@ terraform docs.......................Passed
 ```mermaid
 flowchart TD
 
-A[Write Terraform Code]
+%% ============================
+%% Development Phase
+%% ============================
 
-A --> B[terraform fmt]
+subgraph DEV["📝 Development Phase"]
 
-B --> C[terraform init]
+A["✍️ Write Terraform Code"]
 
-C --> D[terraform validate]
+B["🧹 terraform fmt"]
 
-D --> E[TFLint]
+C["📦 terraform init"]
 
-E --> F[Checkov]
+D["✅ terraform validate"]
 
-F --> G[tfsec]
+A --> B --> C --> D
 
-G --> H[Terrascan]
+end
 
-H --> I[OPA / Conftest]
+%% ============================
+%% Security Phase
+%% ============================
 
-I --> J[terraform plan]
+subgraph SEC["🔒 Security & Quality Phase"]
 
-J --> K{Plan Approved?}
+E["🔍 TFLint"]
 
-K -->|Yes| L[terraform apply]
+F["🛡️ Checkov"]
+
+G["🔐 tfsec"]
+
+H["🌍 Terrascan"]
+
+I["📜 OPA / Conftest"]
+
+E --> F --> G --> H --> I
+
+end
+
+%% ============================
+%% Deployment Phase
+%% ============================
+
+subgraph DEPLOY["🚀 Deployment Phase"]
+
+J["📋 terraform plan"]
+
+K{"✔️ Plan Approved?"}
+
+L["🚀 terraform apply"]
+
+M["☁️ Infrastructure Created"]
+
+J --> K
+
+K -->|Yes| L
 
 K -->|No| A
 
-L --> M[Infrastructure Created]
+L --> M
 
-M --> N[terraform-docs]
+end
 
-N --> O[Git Commit]
+%% ============================
+%% Documentation Phase
+%% ============================
 
-O --> P[Pre-Commit Hooks]
+subgraph DOC["📚 Documentation & Git"]
 
-P --> Q[Push to Repository]
+N["📄 terraform-docs"]
 
-Q --> R[terraform destroy (Demo Cleanup)]
+O["💾 Git Commit"]
+
+P["🪝 Pre-Commit Hooks"]
+
+Q["☁️ Push to Repository"]
+
+N --> O --> P --> Q
+
+end
+
+%% ============================
+%% Cleanup Phase
+%% ============================
+
+subgraph CLEAN["🧹 Cleanup"]
+
+R["🗑️ terraform destroy<br/>(Demo Cleanup)"]
+
+end
+
+%% ============================
+%% Connections
+%% ============================
+
+D --> E
+
+I --> J
+
+M --> N
+
+Q --> R
+
+%% ============================
+%% Colors
+%% ============================
+
+style DEV fill:#E3F2FD,stroke:#1565C0,stroke-width:2px
+style SEC fill:#FFF3E0,stroke:#EF6C00,stroke-width:2px
+style DEPLOY fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px
+style DOC fill:#F3E5F5,stroke:#6A1B9A,stroke-width:2px
+style CLEAN fill:#FFEBEE,stroke:#C62828,stroke-width:2px
+
+style K fill:#FFF59D,stroke:#F9A825,stroke-width:3px
 ```
-
 ---
 
 # 📚 Demo Execution Order
