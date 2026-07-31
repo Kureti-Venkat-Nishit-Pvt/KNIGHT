@@ -2,8 +2,8 @@
 
 > **K**olappan · **N**ishit · **I**nfrastructure · **G**itHub · **H**ybrid · **T**erraform
 
-[![Terraform Pipeline](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terraform-pipeline.yml/badge.svg?branch=K_Test_1)](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terraform-pipeline.yml?query=branch%3AK_Test_1)
-[![Terragrunt Pipeline](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terragrunt-pipeline.yml/badge.svg?branch=K_Test_1)](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terragrunt-pipeline.yml?query=branch%3AK_Test_1)
+[![Terraform Pipeline](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terraform-pipeline.yml/badge.svg?branch=K_Test_2)](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terraform-pipeline.yml?query=branch%3AK_Test_2)
+[![Terragrunt Pipeline](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terragrunt-pipeline.yml/badge.svg?branch=K_Test_2)](https://github.com/Kureti-Venkat-Nishit-Pvt/KNIGHT/actions/workflows/terragrunt-pipeline.yml?query=branch%3AK_Test_2)
 
 ---
 
@@ -61,8 +61,8 @@ Six-scene presenter script for the KNIGHT walkthrough (~50 minutes total):
 │   └── modules/s3-bucket/         #   one reusable module for every environment
 │
 ├── .github/workflows/
-│   ├── terraform-pipeline.yml     #   plan + apply per environment (K_Test_1 only)
-│   ├── terragrunt-pipeline.yml    #   run-all plan + run-all apply (K_Test_1 only)
+│   ├── terraform-pipeline.yml     #   plan + apply per environment (K_Test_2 only)
+│   ├── terragrunt-pipeline.yml    #   run-all plan + run-all apply (K_Test_2 only)
 │   └── knight-destroy-pipeline.yml #  parallel destroy (AWS_Destroy_KNIGHT_mark_1 only)
 │
 ├── .pre-commit-config.yaml        # terraform_fmt, terraform_validate, tflint, tfsec
@@ -142,8 +142,8 @@ pre-commit install
 
 ## Branching layout
 
-All work for this demo lives on the **`K_Test_1`** branch. Both CI pipelines are
-configured to trigger **only** on pushes and pull requests targeting `K_Test_1`, so the
+All work for this demo lives on the **`K_Test_2`** branch. Both CI pipelines are
+configured to trigger **only** on pushes and pull requests targeting `K_Test_2`, so the
 status badges above always reflect that branch.
 
 ## Workflow triggers (step by step)
@@ -203,7 +203,7 @@ flowchart TD
 
 ### CI/CD (GitHub Actions)
 
-1. Push commits to `K_Test_1` (or open a PR into it).
+1. Push commits to `K_Test_2` (or open a PR into it).
 2. **Terraform Pipeline** — runs `fmt` → `init` → `validate` → `plan` for `stage` and
    `prod`. On direct pushes it also runs `apply`.
 3. **Terragrunt Pipeline** — runs `terragrunt run-all plan` across all environments. On
