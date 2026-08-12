@@ -4,7 +4,7 @@
 
 ---
 
-# 🚀 Project Badges
+# 🚀 Project Skills & Details
 
 ![Branch](https://img.shields.io/badge/Branch-K_Test_2-0A66C2?style=for-the-badge&logo=git)
 ![Terraform](https://img.shields.io/badge/Terraform-v1.13+-623CE4?style=for-the-badge&logo=terraform)

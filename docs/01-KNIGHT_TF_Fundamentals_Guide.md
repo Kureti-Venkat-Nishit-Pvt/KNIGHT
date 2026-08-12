@@ -72,7 +72,7 @@ resource "local_file" "demo_file" {
 # 📌 Terraform Local Workflow
 
 ```mermaid
-flowchart TD
+flowchart LR
 
 A[Create Terraform Configuration]
 
@@ -1009,34 +1009,116 @@ Pre-Commit automatically executes configured quality checks before every Git com
 
 ---
 
-## Local Quality Gate Workflow
+## 🛡️ Local Quality Gate Workflow
 
 ```mermaid
 flowchart TD
 
-A[Developer Writes Terraform Code]
+%% ========================================
+%% Styling Configuration
+%% ========================================
 
-A --> B[git commit]
+classDef start fill:#1F4E79,stroke:#0B2D4D,color:#FFFFFF,stroke-width:3px
+classDef git fill:#6A1B9A,stroke:#351C75,color:#FFFFFF,stroke-width:2px
+classDef format fill:#1565C0,stroke:#0D47A1,color:#FFFFFF,stroke-width:2px
+classDef security fill:#B71C1C,stroke:#7F0000,color:#FFFFFF,stroke-width:2px
+classDef decision fill:#F9A825,stroke:#F57F17,color:#000000,stroke-width:3px
+classDef success fill:#2E7D32,stroke:#1B5E20,color:#FFFFFF,stroke-width:3px
+classDef failure fill:#C62828,stroke:#8E0000,color:#FFFFFF,stroke-width:3px
 
-B --> C[Pre-Commit Hook]
 
-C --> D[terraform fmt]
+%% ========================================
+%% Developer
+%% ========================================
 
-D --> E[TFLint]
+START["👨‍💻 Developer<br/>Writes Terraform Code"]:::start
 
-E --> F[Checkov]
 
-F --> G[tfsec]
+%% ========================================
+%% Git Commit
+%% ========================================
 
-G --> H[Terrascan]
+COMMIT["📦 git commit"]:::git
 
-H --> I{All Checks Passed?}
 
-I -->|Yes| J[Git Commit Successful]
+%% ========================================
+%% Pre-Commit
+%% ========================================
 
-I -->|No| K[Commit Rejected]
+HOOK["🪝 Pre-Commit Hook"]:::git
 
-K --> A
+
+%% ========================================
+%% Terraform Formatting
+%% ========================================
+
+FMT["📝 terraform fmt"]:::format
+
+
+%% ========================================
+%% Code Quality & Security Checks
+%% ========================================
+
+subgraph QUALITY["🔍 Code Quality & Security Checks"]
+direction LR
+
+    TFLINT["🔧 TFLint<br/>Terraform Linter"]:::format
+
+    CHECKOV["🔐 Checkov<br/>IaC Security Scan"]:::security
+
+    TFSEC["🛡️ tfsec<br/>Terraform Security Scan"]:::security
+
+    TERRASCAN["🔎 Terrascan<br/>IaC Security Scan"]:::security
+
+    TFLINT --> CHECKOV
+    CHECKOV --> TFSEC
+    TFSEC --> TERRASCAN
+
+end
+
+
+%% ========================================
+%% Decision
+%% ========================================
+
+DECISION{"❓ All Checks<br/>Passed?"}:::decision
+
+
+%% ========================================
+%% Success
+%% ========================================
+
+SUCCESS["✅ Git Commit<br/>Successful"]:::success
+
+
+%% ========================================
+%% Failure
+%% ========================================
+
+FAILURE["❌ Commit Rejected<br/>Fix Issues"]:::failure
+
+
+%% ========================================
+%% Main Vertical Workflow
+%% ========================================
+
+START --> COMMIT
+COMMIT --> HOOK
+HOOK --> FMT
+FMT --> TFLINT
+TERRASCAN --> DECISION
+
+DECISION -->|✅ Yes| SUCCESS
+DECISION -->|❌ No| FAILURE
+
+FAILURE --> START
+
+
+%% ========================================
+%% Container Styling
+%% ========================================
+
+style QUALITY fill:#F4CCCC,stroke:#B71C1C,stroke-width:3px,color:#000000
 ```
 
 ---

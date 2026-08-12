@@ -71,23 +71,107 @@ I --> J[Cloud Infrastructure]
 
 ## Typical Folder Structure
 
-```text
-live/
-├── terragrunt.hcl
-├── dev/
-│   ├── network/
-│   │   └── terragrunt.hcl
-│   └── compute/
-│       └── terragrunt.hcl
-├── qa/
-├── uat/
-└── prod/
+# 📂 Terragrunt Folder Structure
 
-modules/
-├── network/
-├── storage/
-├── compute/
-└── database/
+```mermaid
+flowchart LR
+
+%% ==============================
+%% Styling Configuration
+%% ==============================
+
+classDef root fill:#1f4e79,stroke:#0b2d4d,color:#ffffff,stroke-width:2px
+classDef environment fill:#2f75b5,stroke:#1f4e79,color:#ffffff,stroke-width:2px
+classDef folder fill:#70ad47,stroke:#385723,color:#ffffff,stroke-width:2px
+classDef file fill:#ffc000,stroke:#bf9000,color:#000000,stroke-width:2px
+classDef module fill:#7030a0,stroke:#351c75,color:#ffffff,stroke-width:2px
+
+
+%% ==============================
+%% Live Environment Structure
+%% ==============================
+
+subgraph LIVE["📂 live/ (Environment Configuration)"]
+direction TB
+
+    LIVE_ROOT["📄 terragrunt.hcl<br/>Root Configuration"]:::file
+
+
+    subgraph DEV["📁 dev/"]
+    direction TB
+
+        DEV_NETWORK["📁 network/"]:::folder
+        DEV_NETWORK_FILE["📄 terragrunt.hcl"]:::file
+
+        DEV_COMPUTE["📁 compute/"]:::folder
+        DEV_COMPUTE_FILE["📄 terragrunt.hcl"]:::file
+
+
+        DEV_NETWORK --> DEV_NETWORK_FILE
+        DEV_COMPUTE --> DEV_COMPUTE_FILE
+
+    end
+
+
+    subgraph QA["📁 qa/"]
+    direction TB
+        QA_FOLDER["Environment Configuration"]:::environment
+    end
+
+
+    subgraph UAT["📁 uat/"]
+    direction TB
+        UAT_FOLDER["Environment Configuration"]:::environment
+    end
+
+
+    subgraph PROD["📁 prod/"]
+    direction TB
+        PROD_FOLDER["Environment Configuration"]:::environment
+    end
+
+
+    LIVE_ROOT --> DEV
+    LIVE_ROOT --> QA
+    LIVE_ROOT --> UAT
+    LIVE_ROOT --> PROD
+
+end
+
+
+%% ==============================
+%% Terraform Modules Structure
+%% ==============================
+
+subgraph MODULES["📦 modules/ (Reusable Terraform Modules)"]
+direction TB
+
+    NETWORK_MODULE["📁 network/"]:::module
+    STORAGE_MODULE["📁 storage/"]:::module
+    COMPUTE_MODULE["📁 compute/"]:::module
+    DATABASE_MODULE["📁 database/"]:::module
+
+end
+
+
+%% ==============================
+%% Architecture Flow
+%% ==============================
+
+LIVE --> MODULES
+
+
+%% ==============================
+%% Container Styling
+%% ==============================
+
+style LIVE fill:#eaf3ff,stroke:#1f4e79,stroke-width:3px
+style MODULES fill:#f3e5ff,stroke:#7030a0,stroke-width:3px
+
+style DEV fill:#d9eaf7,stroke:#2f75b5,stroke-width:2px
+style QA fill:#d9ead3,stroke:#70ad47,stroke-width:2px
+style UAT fill:#fff2cc,stroke:#bf9000,stroke-width:2px
+style PROD fill:#f4cccc,stroke:#cc0000,stroke-width:2px
 ```
 
 ---
@@ -141,62 +225,193 @@ Plan: 3 to add, 0 to change, 0 to destroy.
 
 ---
 
-## Terraform vs Terragrunt Workflow
+## 🔄 Terraform vs Terragrunt Workflow
+
+## 🏗️ Terraform Workflow
 
 ```mermaid
 flowchart LR
 
-subgraph Terraform
+%% ==============================
+%% Styling Configuration
+%% ==============================
 
-A1[Terraform Module]
+classDef module fill:#7030A0,stroke:#351C75,color:#ffffff,stroke-width:2px
+classDef command fill:#70AD47,stroke:#385723,color:#ffffff,stroke-width:2px
+classDef config fill:#FFC000,stroke:#BF9000,color:#000000,stroke-width:2px
 
-A1 --> A2[terraform init]
 
-A2 --> A3[terraform plan]
+%% ==============================
+%% Terraform Workflow
+%% ==============================
 
-A3 --> A4[terraform apply]
+subgraph TERRAFORM["🏗️ Terraform Execution Flow"]
+direction LR
+
+    TF_MODULE["📦 Terraform Module<br/>Infrastructure Code"]:::module
+
+    TF_INIT["⚙️ terraform init<br/>Initialize Provider & Backend"]:::command
+
+    TF_VALIDATE["✅ terraform validate<br/>Validate Configuration"]:::command
+
+    TF_PLAN["📋 terraform plan<br/>Preview Infrastructure Changes"]:::command
+
+    TF_APPLY["🚀 terraform apply<br/>Provision Resources"]:::command
+
+
+    TF_MODULE --> TF_INIT
+    TF_INIT --> TF_VALIDATE
+    TF_VALIDATE --> TF_PLAN
+    TF_PLAN --> TF_APPLY
 
 end
 
-subgraph Terragrunt
 
-B1[Terragrunt]
+%% ==============================
+%% Container Styling
+%% ==============================
 
-B1 --> B2[Shared Config]
-
-B2 --> B3[Multiple Terraform Modules]
-
-B3 --> B4[run-all plan]
-
-B4 --> B5[run-all apply]
-
-end
+style TERRAFORM fill:#ede7ff,stroke:#623CE4,stroke-width:3px
 ```
 
 ---
 
-# 📊 Advantages & Disadvantages
+## 🚀 Terragrunt Workflow
 
-## Advantages
+```mermaid
+flowchart LR
 
-| Advantage | Description |
-|-----------|-------------|
-| ✅ DRY Configuration | Eliminates repeated Terraform code across environments. |
-| ✅ Centralized Remote State | Configure the backend once and reuse it everywhere. |
-| ✅ Dependency Management | Automatically handles module dependencies. |
-| ✅ Multi-Environment Support | Easily manage Dev, QA, UAT, and Production. |
-| ✅ Shared Variables | Centralizes common variables across environments. |
-| ✅ Simplified Commands | `run-all` executes Terraform across multiple modules. |
+%% ==============================
+%% Styling Configuration
+%% ==============================
+
+classDef terragrunt fill:#00AEEF,stroke:#006699,color:#ffffff,stroke-width:2px
+classDef config fill:#FFC000,stroke:#BF9000,color:#000000,stroke-width:2px
+classDef module fill:#7030A0,stroke:#351C75,color:#ffffff,stroke-width:2px
+classDef command fill:#70AD47,stroke:#385723,color:#ffffff,stroke-width:2px
+
+
+%% ==============================
+%% Terragrunt Workflow
+%% ==============================
+
+subgraph TERRAGRUNT["🚀 Terragrunt Orchestration Flow"]
+direction LR
+
+    TG_CONFIG["📄 terragrunt.hcl<br/>Shared Configuration"]:::config
+
+    TG_ENV["📂 Live Environment<br/>dev / qa / uat / prod"]:::terragrunt
+
+    TG_MODULES["📦 Terraform Modules<br/>network / compute / storage / database"]:::module
+
+    TG_INIT["⚙️ terragrunt init<br/>Initialize Modules"]:::command
+
+    TG_PLAN["📋 terragrunt run-all plan<br/>Validate Complete Stack"]:::command
+
+    TG_APPLY["🚀 terragrunt run-all apply<br/>Deploy Multiple Modules"]:::command
+
+
+    TG_CONFIG --> TG_ENV
+    TG_ENV --> TG_MODULES
+    TG_MODULES --> TG_INIT
+    TG_INIT --> TG_PLAN
+    TG_PLAN --> TG_APPLY
+
+end
+
+
+%% ==============================
+%% Container Styling
+%% ==============================
+
+style TERRAGRUNT fill:#e0f7ff,stroke:#00AEEF,stroke-width:3px
+```
 
 ---
 
-## Disadvantages
+# 📊 Terragrunt Advantages & Disadvantages
 
-| Limitation | Description |
-|------------|-------------|
-| ❌ Additional Learning Curve | Teams must learn Terragrunt concepts and configuration. |
-| ❌ Extra Dependency | Requires Terragrunt to be installed in addition to Terraform. |
-| ❌ More Abstraction | Debugging can be slightly more complex because Terragrunt wraps Terraform. |
-| ❌ Smaller Community | Terraform has a much larger ecosystem and community support. |
+```mermaid
+flowchart TD
 
+%% ==============================
+%% Styles
+%% ==============================
+
+classDef advantage fill:#70AD47,stroke:#385723,color:#ffffff,stroke-width:2px
+classDef disadvantage fill:#C00000,stroke:#7F0000,color:#ffffff,stroke-width:2px
+classDef title fill:#1F4E79,stroke:#0B2D4D,color:#ffffff,stroke-width:3px
+
+
+%% ==============================
+%% Root Node
+%% ==============================
+
+ROOT["🚀 Terragrunt"]:::title
+
+
+%% ==============================
+%% Advantages Section
+%% ==============================
+
+subgraph ADV["✅ Advantages"]
+direction TB
+
+A1["🧩 DRY Configuration<br/>Less duplicate Terraform code"]:::advantage
+
+A2["🗄️ Centralized State<br/>Reusable backend configuration"]:::advantage
+
+A3["🔗 Dependency Management<br/>Automatic module ordering"]:::advantage
+
+A4["🌎 Multi Environment<br/>Dev / QA / UAT / Prod"]:::advantage
+
+A5["⚡ run-all Commands<br/>Deploy multiple modules"]:::advantage
+
+
+A1 --> A2
+A2 --> A3
+A3 --> A4
+A4 --> A5
+
+end
+
+
+%% ==============================
+%% Disadvantages Section
+%% ==============================
+
+subgraph DIS["❌ Disadvantages"]
+direction TB
+
+D1["📚 Learning Curve<br/>New Terragrunt concepts"]:::disadvantage
+
+D2["🔧 Extra Dependency<br/>Terraform + Terragrunt"]:::disadvantage
+
+D3["🕵️ Debugging Complexity<br/>Additional abstraction layer"]:::disadvantage
+
+D4["🌐 Smaller Ecosystem<br/>Less community support"]:::disadvantage
+
+
+D1 --> D2
+D2 --> D3
+D3 --> D4
+
+end
+
+
+%% ==============================
+%% Main Relationship
+%% ==============================
+
+ROOT --> ADV
+ROOT --> DIS
+
+
+%% ==============================
+%% Container Styling
+%% ==============================
+
+style ADV fill:#1E3A1E,stroke:#70AD47,stroke-width:3px,color:#FFFFFF
+style DIS fill:#3A1E1E,stroke:#C00000,stroke-width:3px,color:#FFFFFF
+```
 ---
