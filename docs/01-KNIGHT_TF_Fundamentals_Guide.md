@@ -1352,4 +1352,231 @@ This guide covered:
 - ✅ End-to-End Local Terraform Workflow
 
 ---
+# ☁️ Tools Workflow
+```mermaid
 
+flowchart LR
+ 
+    %% =========================================================
+    %% SOURCE
+    %% =========================================================
+    DEV["👨‍💻 Developer"] --> GH["🐙 GitHub Repository"]
+ 
+    %% =========================================================
+    %% SOURCE CODE SECURITY
+    %% =========================================================
+    subgraph SOURCE["🔐 01 — SOURCE CODE SECURITY"]
+        direction TB
+        GL["🔑 Gitleaks<br/>Secret Scanning"]
+        CQ["🧬 CodeQL<br/>SAST"]
+    end
+ 
+    GH --> GL
+    GH --> CQ
+ 
+    %% =========================================================
+    %% TERRAFORM / IaC
+    %% =========================================================
+    subgraph IAC["🏗️ 02 — TERRAFORM / IaC SECURITY"]
+        direction TB
+ 
+        TF["Terraform Code"]
+ 
+        TL["🧹 TFLint<br/>Terraform Linting"]
+        CK["🛡️ Checkov<br/>IaC Security"]
+        TS["🔍 tfsec<br/>Terraform Security"]
+        TR["🌐 Terrascan<br/>IaC Security"]
+        KC["🔎 KICS<br/>IaC Security"]
+    end
+ 
+    GH --> TF
+    TF --> TL
+    TF --> CK
+    TF --> TS
+    TF --> TR
+    TF --> KC
+ 
+    %% =========================================================
+    %% POLICY AS CODE
+    %% =========================================================
+    subgraph POLICY["📜 03 — POLICY AS CODE"]
+        direction TB
+ 
+        OPA["⚖️ OPA<br/>Open Policy Agent"]
+        CONF["📋 Conftest<br/>Policy Testing"]
+    end
+ 
+    CK --> OPA
+    TS --> OPA
+    TR --> OPA
+    KC --> OPA
+    OPA --> CONF
+ 
+    %% =========================================================
+    %% TERRAFORM VALIDATION
+    %% =========================================================
+    subgraph TFVALID["⚙️ 04 — TERRAFORM VALIDATION"]
+        direction TB
+ 
+        FMT["terraform fmt"]
+        VALID["terraform validate"]
+        PLAN["terraform plan"]
+        DOC["📚 terraform-docs"]
+    end
+ 
+    TF --> FMT
+    FMT --> VALID
+    VALID --> PLAN
+    TF --> DOC
+    CONF --> PLAN
+ 
+    %% =========================================================
+    %% SECURITY GATE
+    %% =========================================================
+    GATE{"🚦 SECURITY GATE"}
+ 
+    GL --> GATE
+    CQ --> GATE
+    TL --> GATE
+    CK --> GATE
+    TS --> GATE
+    TR --> GATE
+    KC --> GATE
+    CONF --> GATE
+    PLAN --> GATE
+ 
+    GATE -->|❌ FAIL| BLOCK["🚫 BLOCK PIPELINE"]
+    GATE -->|✅ PASS| BUILD["🔨 BUILD"]
+ 
+    %% =========================================================
+    %% CONTAINER SECURITY
+    %% =========================================================
+    subgraph CONTAINER["🐳 05 — CONTAINER SECURITY"]
+        direction TB
+ 
+        DOCKER["🐳 Docker Build"]
+        TRIVY["🔍 Trivy<br/>Container + Dependency Scan"]
+    end
+ 
+    BUILD --> DOCKER
+    DOCKER --> TRIVY
+ 
+    TRIVY --> CGATE{"🚦 CONTAINER<br/>SECURITY GATE"}
+ 
+    CGATE -->|❌ FAIL| BLOCK2["🚫 BLOCK IMAGE"]
+    CGATE -->|✅ PASS| REGISTRY["📦 Container Registry"]
+ 
+    %% =========================================================
+    %% CLOUD DEPLOYMENT
+    %% =========================================================
+    subgraph CLOUD["☁️ 06 — CLOUD INFRASTRUCTURE"]
+        direction TB
+ 
+        AZ["☁️ Azure"]
+        AWS["☁️ AWS"]
+ 
+        AKS["☸️ AKS"]
+        EKS["☸️ EKS"]
+    end
+ 
+    PLAN --> AZ
+    PLAN --> AWS
+ 
+    REGISTRY --> AKS
+    REGISTRY --> EKS
+ 
+    %% =========================================================
+    %% KUBERNETES SECURITY
+    %% =========================================================
+    subgraph K8SSEC["☸️ 07 — KUBERNETES SECURITY"]
+        direction TB
+ 
+        KUBE["Kubernetes / AKS / EKS"]
+        KUBESCAPE["🛡️ Kubescape<br/>Kubernetes Security"]
+        FALCO["👁️ Falco<br/>Runtime Security"]
+    end
+ 
+    AKS --> KUBE
+    EKS --> KUBE
+ 
+    KUBE --> KUBESCAPE
+    KUBE --> FALCO
+ 
+    %% =========================================================
+    %% CLOUD SECURITY
+    %% =========================================================
+    subgraph CLOUDSEC["🌩️ 08 — CLOUD SECURITY"]
+        direction TB
+ 
+        PROWLER["🔎 Prowler<br/>Cloud Security"]
+        DEFENDER["🛡️ Microsoft Defender<br/>for Cloud"]
+    end
+ 
+    AZ --> DEFENDER
+    AWS --> PROWLER
+ 
+    %% =========================================================
+    %% ARTIFACT SECURITY
+    %% =========================================================
+    subgraph ARTIFACT["📦 09 — ARTIFACT SECURITY"]
+        direction TB
+ 
+        JFROG["🦋 JFrog Artifactory"]
+        XRAY["🔬 JFrog Xray"]
+    end
+ 
+    REGISTRY --> JFROG
+    JFROG --> XRAY
+ 
+    %% =========================================================
+    %% DOCUMENTATION
+    %% =========================================================
+    DOC --> DOCUMENTATION["📖 Security + Terraform Documentation"]
+ 
+ 
+    %% =========================================================
+    %% STYLES
+    %% =========================================================
+ 
+    classDef source fill:#24292F,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+    classDef secret fill:#8B5CF6,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+    classDef sast fill:#EC4899,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+ 
+    classDef iac fill:#1F6FEB,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+    classDef policy fill:#F59E0B,color:#000000,stroke:#FFFFFF,stroke-width:2px;
+    classDef terraform fill:#7C3AED,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+ 
+    classDef gate fill:#DC2626,color:#FFFFFF,stroke:#FFFFFF,stroke-width:3px;
+    classDef build fill:#16A34A,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+ 
+    classDef container fill:#0891B2,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+    classDef cloud fill:#0EA5E9,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+    classDef k8s fill:#2563EB,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+ 
+    classDef security fill:#DC2626,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+    classDef artifact fill:#EA580C,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+    classDef docs fill:#64748B,color:#FFFFFF,stroke:#FFFFFF,stroke-width:2px;
+ 
+ 
+    class DEV,GH source;
+    class GL secret;
+    class CQ sast;
+ 
+    class TF,TL,CK,TS,TR,KC iac;
+    class OPA,CONF policy;
+    class FMT,VALID,PLAN,DOC terraform;
+ 
+    class GATE,CGATE gate;
+    class BLOCK,BLOCK2 security;
+    class BUILD build;
+ 
+    class DOCKER,TRIVY container;
+    class AZ,AWS,AKS,EKS cloud;
+ 
+    class KUBE,KUBESCAPE,FALCO k8s;
+    class PROWLER,DEFENDER security;
+ 
+    class JFROG,XRAY artifact;
+    class DOCUMENTATION docs;
+```
+---
